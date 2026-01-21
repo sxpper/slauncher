@@ -1,0 +1,46 @@
+{
+  "name": "slauncher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev-admin": "powershell Start-Process electron -ArgumentList \".\" -Verb RunAs",
+    "dist": "electron-builder -w nsis",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.applauncher.v3",
+    "productName": "SLauncher",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "requestedExecutionLevel": "requireAdministrator",
+      "target": "portable",
+      "publish": {
+        "provider": "github",
+        "owner": "sxpper",
+        "repo": "slauncher"
+      }
+    },
+    "portable": {
+      "artifactName": "SLauncher_Portable.exe"
+    }
+  },
+  "dependencies": {
+    "electron-log": "^5.4.3",
+    "electron-store": "^6.0.1",
+    "electron-updater": "^6.7.3",
+    "systeminformation": "^5.30.3"
+  }
+}

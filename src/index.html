@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLauncher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            alert("Global Error: " + message + "\nSource: " + source + "\nLine: " + lineno);
+        };
+
+
+        function switchSettingsTab(tabId, btn) {
+            var i;
+            var tabs = document.getElementsByClassName('tab-btn');
+            for (i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+            var secs = document.getElementsByClassName('settings-section');
+            for (i = 0; i < secs.length; i++) secs[i].classList.remove('active');
+            if (btn) btn.classList.add('active');
+            var sec = document.getElementById('tab-' + tabId);
+            if (sec) sec.classList.add('active');
+        }
+        function setTheme(n) {
+            var r = document.documentElement;
+            if (n === 'cyberpunk') { r.style.setProperty('--bg-color-1', '#0f0c29'); r.style.setProperty('--accent-primary', '#00f2ff'); }
+            else if (n === 'zen') { r.style.setProperty('--bg-color-1', '#1a2a1a'); r.style.setProperty('--accent-primary', '#7bed9f'); }
+        }
+        function toggleAudio() { var s = document.getElementById('audioSwitch'); if (s) s.classList.toggle('active'); }
+        function toggleLowSpec() { var s = document.getElementById('lowSpecSwitch'); if (s) { s.classList.toggle('active'); document.body.classList.toggle('low-spec-mode'); } }
+        function toggleUtilityWidget() { var w = document.getElementById('utilityWidget'); if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none'; }
+        function toggleWidget(side) { console.log('Toggle widget:', side); }
+
+
+
+
+        document.addEventListener('click', function (e) {
+            var panel = document.getElementById('settingsPanel');
+            var settingsBtn = document.querySelector('.settings-btn');
+            if (panel && panel.classList.contains('active')) {
+                if (!panel.contains(e.target) && !settingsBtn.contains(e.target)) {
+                    panel.classList.remove('active');
+                }
+            }
+        });
+
+        window.toggleSystemStats = function () {
+            console.log("INLINE TOGGLE CLICKED");
+
+            var toggle = document.getElementById('systemStatsToggle');
+            var container = document.getElementById('graphContainer');
+
+            if (toggle) {
+                toggle.classList.toggle('active');
+                var isEnabled = toggle.classList.contains('active');
+                window.systemStatsEnabled = isEnabled;
+
+                if (container) {
+                    container.style.display = isEnabled ? 'flex' : 'none';
+                    container.offsetHeight;
+                }
+
+                if (isEnabled && typeof window.startSystemStats === 'function') {
+                    window.startSystemStats();
+                } else if (isEnabled) {
+                    console.error("startSystemStats function not found! Renderer UI possibly not loaded.");
+                    alert("Stats Enabled, but data loader (renderer_ui.js) is missing!");
+                }
+            }
+        };
+    </script>
+</head>
+
+<body>
+    <div class="background-fx"></div>
+    <div id="settingsBackdrop"></div>
+    <div class="status-bar" style="display:none;"></div>
+    <button class="settings-btn"><i class="fa-solid fa-gear"></i></button>
+
+    <div id="addAppsBtn" class="add-apps-btn">
+        <i class="fa-solid fa-plus"></i> Add Apps
+    </div>
+
+    <div class="app-container">
+        <div class="top-bar">
+            <div class="status-indicators">
+                <div class="system-graphs" id="graphContainer" style="display:none; overflow-x:auto; max-width:90%;">
+                </div>
+                <div id="graphTooltip"
+                    style="position:absolute; display:none; background:rgba(0,0,0,0.8); border:1px solid var(--accent-primary); padding:5px 10px; border-radius:4px; font-size:0.8rem; pointer-events:none; z-index:9000; backdrop-filter:blur(5px); box-shadow:0 5px 15px rgba(0,0,0,0.5);">
+                    Tooltip</div>
+            </div>
+        </div>
+
+
+
+        <div class="interaction-row">
+
+
+            <div class="dock-column">
+                <div class="pinned-row" id="pinnedRow"></div>
+                <div class="dock-wrapper">
+                    <button class="nav-btn" onclick="move(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="carousel-viewport" id="viewport">
+                        <div class="carousel-track" id="track"></div>
+                    </div>
+                    <button class="nav-btn" onclick="move(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div id="addAppsModal" class="modal-overlay">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>Add Applications</h2>
+                <button id="closeAddAppsBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-tabs">
+                <button id="tabBtn-manual" class="modal-tab active">Manual
+                    File</button>
+                <button id="tabBtn-running" class="modal-tab">Running
+                    Apps</button>
+                <button id="tabBtn-scan" class="modal-tab">Auto Scan</button>
+            </div>
+            <div class="modal-body">
+                <div id="addTab-manual" class="add-section active">
+                    <p>Select an executable (.exe) file from your system.</p>
+                    <button id="btn-manualAdd" class="primary-btn">
+                        <i class="fa-solid fa-folder-open"></i> Browse Files
+                    </button>
+                </div>
+
+                <div id="addTab-running" class="add-section">
+                    <div class="action-row">
+                        <button id="btn-refreshRunning" class="primary-btn">Refresh
+                            List</button>
+                        <button id="btn-addRunning" class="secondary-btn">Add
+                            Selected</button>
+                    </div>
+                    <div id="runningAppsList" class="apps-list-container">
+                        <div class="loader">Click Refresh to scan...</div>
+                    </div>
+                </div>
+
+                <div id="addTab-scan" class="add-section">
+                    <p>Smart Scan will search Start Menu and key folders for installed games and apps.</p>
+                    <div style="margin-bottom:15px;">
+                        <input type="text" id="scanSearchInput" placeholder="Search found apps..."
+                            style="width:100%; padding:8px 12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-family:inherit;">
+                    </div>
+                    <div class="action-row">
+                        <button id="btn-startScan" class="primary-btn">Start
+                            Scan</button>
+                        <button id="btn-addScan" class="secondary-btn">Add
+                            Selected</button>
+                    </div>
+                    <div id="scanResultsList" class="apps-list-container">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search apps..." autocomplete="off">
+
+    </div>
+
+    <div class="k-widget">
+        <div class="k-logo"><i class="fa-regular fa-keyboard"></i></div>
+        <div class="k-tooltip">
+            <div class="k-row"><span>Arrows L/R</span> <span>Nav</span></div>
+            <div class="k-row"><span>Arrow Up</span> <span>Pinned</span></div>
+            <div class="k-row"><span>Arrow Down</span> <span>Normal</span></div>
+            <div class="k-row"><span>Enter</span> <span>Open</span></div>
+            <div class="k-row"><span>Esc</span> <span>Back</span></div>
+            <div class="k-row"><span>?</span> <span>Help</span></div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <div class="context-menu" id="contextMenu">
+        <div class="ctx-item" onclick="ContextMenu.handleAction('pin')"><i class="fa-solid fa-thumbtack"></i> <span
+                id="ctxPinText">Add to Pins</span></div>
+        <div class="ctx-item" onclick="ContextMenu.handleAction('launch')"><i class="fa-solid fa-rocket"></i> Launch
+        </div>
+        <div class="ctx-item" onclick="ContextMenu.handleAction('timer')"><i class="fa-solid fa-hourglass-half"></i> Set
+            Usage Timer</div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item" onclick="ContextMenu.handleAction('remove')" style="color:#ff0055"><i
+                class="fa-solid fa-trash"></i> Remove</div>
+        <div class="ctx-item" onclick="ContextMenu.hide()" style="color:rgba(255,255,255,0.5)"><i
+                class="fa-solid fa-info-circle"></i> Properties</div>
+    </div>
+
+    <div id="usageTimerModal" class="timer-modal" style="display:none;">
+        <div class="tm-header">Set Reminder For <span id="tmAppName" style="color:var(--accent-primary)">App</span>
+        </div>
+        <div class="tm-options">
+            <button onclick="AppTimer.set(15)">15m</button>
+            <button onclick="AppTimer.set(30)">30m</button>
+            <button onclick="AppTimer.set(45)">45m</button>
+            <button onclick="AppTimer.set(60)">1h</button>
+        </div>
+        <div class="tm-custom">
+            <input type="number" id="tmCustomInput" placeholder="Min" min="1" max="120">
+            <button onclick="AppTimer.setCustom()">Start</button>
+            <button onclick="AppTimer.set(0.1)" style="background:rgba(255,100,100,0.2); margin-left:10px;">Test
+                (5s)</button>
+        </div>
+        <button class="tm-close"
+            onclick="document.getElementById('usageTimerModal').style.display='none'">Cancel</button>
+    </div>
+
+    <div id="widgetDescBox" class="widget-desc-box"></div>
+
+    <div id="utilityWidget" class="utility-widget">
+        <div class="uw-header">
+            <span class="uw-title" id="uwTitle"><i class="fa-solid fa-note-sticky"></i> Sticky Note</span>
+            <div class="uw-controls">
+                <i class="fa-solid fa-arrows-rotate" title="Switch Mode" onclick="toggleUtilityMode()"></i>
+                <i class="fa-solid fa-xmark" title="Close" onclick="toggleUtilityWidget(false)"></i>
+            </div>
+        </div>
+        <div class="uw-content" id="uwSticky" style="display:block;">
+            <textarea class="sticky-area" placeholder="Type your notes here..."></textarea>
+        </div>
+        <div class="uw-content" id="uwTimer" style="display:none; text-align:center;">
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div style="margin-bottom:10px; display:flex; gap:5px; justify-content:center;">
+                <input type="number" id="timerInput" value="25" min="1" max="120"
+                    style="width:50px; background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:2px 5px; text-align:center;">
+                <button class="t-btn-small" onclick="setCustomTimer()"
+                    style="font-size:0.7rem; padding:2px 8px; background:var(--accent-primary); border:none; border-radius:4px; color:#000; cursor:pointer;">Set</button>
+            </div>
+            <div class="timer-controls">
+                <button class="t-btn" onclick="timerAction('start')"><i class="fa-solid fa-play"></i></button>
+                <button class="t-btn" onclick="timerAction('pause')"><i class="fa-solid fa-pause"></i></button>
+                <button class="t-btn" onclick="timerAction('reset')"><i class="fa-solid fa-rotate-left"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header"><span>Settings //</span><span style="cursor:pointer; opacity:0.5;">✕</span></div>
+        <div class="settings-body">
+            <div class="settings-tabs">
+                <button class="tab-btn active" onclick="switchSettingsTab('visuals', this)">Visuals</button>
+                <button class="tab-btn" onclick="switchSettingsTab('interface', this)">Interface</button>
+
+                <button class="tab-btn" onclick="switchSettingsTab('custom', this)">Custom</button>
+                <button class="tab-btn" onclick="switchSettingsTab('perf', this)">Performance</button>
+                <button class="tab-btn" onclick="switchSettingsTab('updates', this)">Updates</button>
+            </div>
+            <div class="settings-content-area">
+                <div class="settings-section" id="tab-updates">
+                    <div class="section-title">System Updates</div>
+                    <div class="toggle-row">
+                        <div style="display:flex; flex-direction:column;">
+                            <span>Auto-Update from Git</span>
+                            <span style="font-size:0.7rem; color:#666;">Checks for changes on startup</span>
+                        </div>
+                        <div class="tech-switch" id="autoUpdateToggle" onclick="toggleAutoUpdate()"></div>
+                    </div>
+                    <button onclick="checkForUpdatesNow()" class="tech-btn" style="width:100%; margin-top:10px;"><i
+                            class="fa-brands fa-github"></i> Check Now</button>
+                    <div id="updateStatus" style="margin-top:10px; font-size:0.8rem; color:#888; font-style:italic;">
+                    </div>
+
+                    <div
+                        style="margin-top: auto; padding-top: 20px; font-size: 0.8rem; color: rgba(255,255,255,0.3); display: flex; align-items: center; gap: 10px; justify-content: center; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <i class="fa-brands fa-discord"></i> sxpper
+                    </div>
+                </div>
+                <div class="settings-section active" id="tab-visuals">
+                    <div class="section-title">Visuals</div>
+                    <div class="toggle-row"><label>Launch Effect</label><select onchange="selectedAnim = this.value"
+                            class="settings-select">
+                            <option value="snap">Snap</option>
+                            <option value="charge" selected>Charge</option>
+                            <option value="glitch">Glitch</option>
+                            <option value="zoom">Zoom</option>
+                            <option value="none">None</option>
+                        </select></div>
+                    <div class="toggle-row"><label>Theme</label>
+                        <div style="display:flex; gap:5px;"><button onclick="setTheme('cyberpunk')"
+                                style="padding:4px 8px; background:#00f2ff; border:none; border-radius:2px; font-size:0.7rem; font-weight:800; cursor:pointer;">CP</button><button
+                                onclick="setTheme('zen')"
+                                style="padding:4px 8px; background:#7bed9f; border:none; border-radius:2px; font-size:0.7rem; font-weight:800; color:#333; cursor:pointer;">ZEN</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section" id="tab-interface">
+                    <div class="section-title">Interface</div>
+                    <div class="toggle-row"><label>Visible Apps</label><input type="number" id="visibleInput" value="5"
+                            min="3" max="9"
+                            style="width:50px; background:#333; color:white; border:1px solid #555; border-radius:4px; padding:5px; text-align:center;"
+                            onchange="rebuildCarousel()"></div>
+
+                    <div class="toggle-row"><label>Audio FX</label>
+                        <div class="tech-switch active" id="audioSwitch" onclick="toggleAudio()"></div>
+                    </div>
+                    <div class="toggle-row"><span>Show Utility Widget (Notes/Timer)</span>
+                        <div class="tech-switch active" id="utilityWidgetToggle" onclick="toggleUtilityWidget()"></div>
+                    </div>
+                    <div class="toggle-row"><span>Show System Stats (CPU/GPU/RAM)</span>
+                        <div class="tech-switch" id="systemStatsToggle"></div>
+                    </div>
+
+                </div>
+
+                <div class="settings-section" id="tab-custom">
+                    <div class="section-title">Customization</div>
+                    <div class="toggle-row" style="flex-direction:column; align-items:flex-start;">
+                        <label style="margin-bottom:10px;">Custom Background</label>
+                        <div style="display:flex; gap:10px; width:100%;">
+                            <input type="file" id="bgInput" accept="image/*" style="display:none;"
+                                onchange="handleCustomBg(this)">
+                            <button onclick="document.getElementById('bgInput').click()" class="tech-btn"
+                                style="flex:1;"><i class="fa-solid fa-image"></i> Upload Image</button>
+                            <button onclick="resetBackground()" class="tech-btn"
+                                style="width:40px; background:#ff0055;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <div class="settings-section" id="tab-perf">
+                    <div class="section-title">Performance</div>
+                    <div class="toggle-row"><label>Low Spec Mode</label>
+                        <div class="tech-switch" id="lowSpecSwitch" onclick="toggleLowSpec()"></div>
+                    </div>
+                    <div class="toggle-row"><label>Target FPS</label><select onchange="setFPS(this.value)"
+                            class="settings-select">
+                            <option value="5">5 FPS</option>
+                            <option value="30">30 FPS</option>
+                            <option value="60" selected>60 FPS</option>
+                        </select></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer_loader.js"></script>
+    <script src="renderer_core.js"></script>
+    <script src="renderer_ui.js"></script>
+    <script src="modal_handler.js"></script>
+    <script src="settings_handler.js"></script>
+</body>
+
+</html>
