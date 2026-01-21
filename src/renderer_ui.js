@@ -502,16 +502,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const paths = await window.ipcRenderer.invoke('get-custom-paths');
             if (paths && paths.bg) {
-                document.body.style.backgroundImage = `url('${paths.bg.replace(/\\/g, '/')}')`;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundPosition = 'center';
-                document.body.style.animation = 'none';
+                if (paths.bg.startsWith('#')) {
+                    document.body.style.backgroundImage = 'none';
+                    document.body.style.backgroundColor = paths.bg;
+                } else {
+                    document.body.style.backgroundImage = `url('${paths.bg.replace(/\\/g, '/')}')`;
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.animation = 'none';
+                }
             }
         } catch (e) {
             console.error("Failed to load persistence data:", e);
         }
     }
 });
+
+window.setSolidBackground = function (color) {
+    document.body.style.backgroundImage = 'none';
+    document.body.style.backgroundColor = color;
+    document.body.style.animation = 'none';
+
+    if (window.ipcRenderer) {
+        window.ipcRenderer.invoke('save-custom-paths', { bg: color });
+    }
+};
 
 function applySettings(s) {
     if (s.theme) window.setTheme(s.theme);
