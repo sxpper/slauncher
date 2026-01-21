@@ -270,23 +270,19 @@ ipcMain.handle('get-settings', () => {
 });
 
 ipcMain.handle('check-for-updates', async () => {
-    return new Promise((resolve) => {
-        const projectRoot = path.join(__dirname, '..');
-        child_process.exec('git pull', { cwd: projectRoot }, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Git Update Error:", error);
-                resolve({ success: false, message: "Update Failed (Git not found?)" });
-                return;
-            }
-            if (stdout && stdout.includes('Already up to date')) {
-                resolve({ success: true, message: "Already up to date." });
-            } else if (stdout) {
-                resolve({ success: true, message: "Updated! Restarting..." });
-            } else {
-                resolve({ success: false, message: "Unknown Git Response" });
-            }
-        });
-    });
+    if (!app.isPackaged) {
+        return { success: false, message: "Cannot update in Dev Mode" };
+    }
+
+    // Trigger the check. The actual result comes via autoUpdater events (update-available / not-available)
+    // We return a message saying we started the check.
+    try {
+        const result = await autoUpdater.checkForUpdates();
+        // result contains promise that resolves to UpdateCheckResult
+        return { success: true, message: "Checking for updates..." };
+    } catch (e) {
+        return { success: false, message: "Error checking updates: " + e.message };
+    }
 });
 
 ipcMain.handle('save-settings', (event, settings) => {
