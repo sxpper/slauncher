@@ -485,6 +485,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (window.ipcRenderer) {
+        window.ipcRenderer.on('checking_update', () => {
+            const el = document.getElementById('updateStatus');
+            if (el) el.innerText = "Checking for updates...";
+        });
+        window.ipcRenderer.on('update_available', () => {
+            const el = document.getElementById('updateStatus');
+            if (el) el.innerText = "Update available! Downloading...";
+        });
+        window.ipcRenderer.on('update_not_available', () => {
+            const el = document.getElementById('updateStatus');
+            if (el) {
+                el.innerText = "You are on the latest version.";
+                setTimeout(() => { el.innerText = ""; }, 5000);
+            }
+        });
+        window.ipcRenderer.on('update_error', (event, message) => {
+            const el = document.getElementById('updateStatus');
+            if (el) el.innerText = "Error: " + message;
+        });
+        window.ipcRenderer.on('update_downloaded', () => {
+            const el = document.getElementById('updateStatus');
+            if (el) {
+                el.innerHTML = "Update Ready. <span style='cursor:pointer; color:#00f2ff; text-decoration:underline;' onclick='restartApp()'>Restart</span>";
+            }
+        });
+
         try {
             const settings = await window.ipcRenderer.invoke('get-settings');
             if (settings) {

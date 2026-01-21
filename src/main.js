@@ -610,6 +610,7 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', (info) => {
     log.info('Update not available.', info);
+    if (mainWindow) mainWindow.webContents.send('update_not_available');
 });
 
 autoUpdater.on('error', (err) => {
