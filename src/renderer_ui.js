@@ -564,6 +564,19 @@ function applySettings(s) {
             else auToggle.classList.remove('active');
         }
     }
+
+    if (s.hasOwnProperty('startup')) {
+        const sw = document.getElementById('startupSwitch');
+        if (sw) sw.classList.toggle('active', s.startup);
+    }
+    if (s.hasOwnProperty('runAsAdmin')) {
+        const sw = document.getElementById('adminSwitch');
+        if (sw) sw.classList.toggle('active', s.runAsAdmin);
+    }
+    if (s.hasOwnProperty('startMinimized')) {
+        const sw = document.getElementById('minimizedSwitch');
+        if (sw) sw.classList.toggle('active', s.startMinimized);
+    }
 }
 
 function saveCurrentSettings() {
@@ -576,7 +589,10 @@ function saveCurrentSettings() {
         visibleApps: parseInt(document.getElementById('visibleInput')?.value) || 5,
         utilityWidgetVisible: document.getElementById('utilityWidget')?.style.display !== 'none',
         systemStatsEnabled: document.getElementById('systemStatsToggle')?.classList.contains('active') || false,
-        autoUpdate: document.getElementById('autoUpdateToggle')?.classList.contains('active') || false
+        autoUpdate: document.getElementById('autoUpdateToggle')?.classList.contains('active') || false,
+        startup: document.getElementById('startupSwitch')?.classList.contains('active') || false,
+        runAsAdmin: document.getElementById('adminSwitch')?.classList.contains('active') || false,
+        startMinimized: document.getElementById('minimizedSwitch')?.classList.contains('active') || false
     };
 
     window.ipcRenderer.invoke('save-settings', settings);
@@ -604,6 +620,30 @@ const originalToggleUtilityWidget = window.toggleUtilityWidget;
 window.toggleUtilityWidget = function (force) {
     originalToggleUtilityWidget(force);
     saveCurrentSettings();
+};
+
+window.toggleStartup = function () {
+    const sw = document.getElementById('startupSwitch');
+    if (sw) {
+        sw.classList.toggle('active');
+        saveCurrentSettings();
+    }
+};
+
+window.toggleAdmin = function () {
+    const sw = document.getElementById('adminSwitch');
+    if (sw) {
+        sw.classList.toggle('active');
+        saveCurrentSettings();
+    }
+};
+
+window.toggleMinimized = function () {
+    const sw = document.getElementById('minimizedSwitch');
+    if (sw) {
+        sw.classList.toggle('active');
+        saveCurrentSettings();
+    }
 };
 
 window.targetFPS = 60;

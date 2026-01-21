@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, screen, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -9,6 +9,27 @@ autoUpdater.logger = log;
 log.info('App starting...');
 
 let mainWindow = null;
+let tray = null;
+
+function createTray() {
+    const iconPath = path.join(__dirname, 'slauncher_logo.png');
+    tray = new Tray(iconPath);
+    const contextMenu = Menu.buildFromTemplate([
+        { label: 'Show App', click: () => mainWindow.show() },
+        {
+            label: 'Quit', click: () => {
+                app.isQuitting = true;
+                app.quit();
+            }
+        }
+    ]);
+    tray.setToolTip('SLauncher');
+    tray.setContextMenu(contextMenu);
+
+    tray.on('double-click', () => {
+        mainWindow.show();
+    });
+}
 
 const { protocol } = require('electron');
 protocol.registerSchemesAsPrivileged([
@@ -36,6 +57,16 @@ function createWindow() {
         show: false
     });
 
+    const settings = store.get('settings', {});
+    if (settings.startMinimized) {
+        console.log("Starting Minimized...");
+    } else {
+        mainWindow.once('ready-to-show', () => {
+            mainWindow.show();
+            autoUpdater.checkForUpdatesAndNotify();
+        });
+    }
+
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
     mainWindow.webContents.once('did-finish-load', () => {
@@ -56,6 +87,14 @@ function createWindow() {
     });
 
     mainWindow.removeMenu();
+
+    mainWindow.on('close', (event) => {
+        if (!app.isQuitting) {
+            event.preventDefault();
+            mainWindow.hide();
+        }
+        return false;
+    });
 
     mainWindow.webContents.on('before-input-event', (event, input) => {
         if ((input.control && input.key.toLowerCase() === 'r') || input.key === 'F5') {
@@ -106,6 +145,7 @@ app.whenReady().then(() => {
         });
     }
 
+    createTray();
     createWindow();
 
     app.on('activate', () => {
@@ -220,7 +260,10 @@ ipcMain.handle('get-settings', () => {
         visibleApps: 5,
         utilityWidgetVisible: false,
         systemStatsEnabled: false,
-        autoUpdate: true
+        autoUpdate: true,
+        startup: false,
+        runAsAdmin: false,
+        startMinimized: false
     };
     const stored = store.get('settings', {});
     return { ...defaults, ...stored };
@@ -248,6 +291,18 @@ ipcMain.handle('check-for-updates', async () => {
 
 ipcMain.handle('save-settings', (event, settings) => {
     store.set('settings', settings);
+
+    // Apply Startup Settings
+    if (!app.isPackaged) {
+        console.log("Skipping Login settings (Dev Mode)");
+    } else {
+        app.setLoginItemSettings({
+            openAtLogin: !!settings.startup,
+            openAsHidden: !!settings.startMinimized,
+            path: app.getPath('exe')
+        });
+    }
+
     return true;
 });
 

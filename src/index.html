@@ -262,8 +262,24 @@
                 <button class="tab-btn" onclick="switchSettingsTab('custom', this)">Custom</button>
                 <button class="tab-btn" onclick="switchSettingsTab('perf', this)">Performance</button>
                 <button class="tab-btn" onclick="switchSettingsTab('updates', this)">Updates</button>
+                <button class="tab-btn" onclick="switchSettingsTab('startup', this)">Startup</button>
             </div>
             <div class="settings-content-area">
+                <div class="settings-section" id="tab-startup">
+                    <div class="section-title">Startup Options</div>
+                    <div class="toggle-row">
+                        <span>Launch on Startup</span>
+                        <div class="tech-switch" id="startupSwitch" onclick="toggleStartup()"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Launch as Admin</span>
+                        <div class="tech-switch" id="adminSwitch" onclick="toggleAdmin()"></div>
+                    </div>
+                    <div class="toggle-row">
+                        <span>Keep Minimized</span>
+                        <div class="tech-switch" id="minimizedSwitch" onclick="toggleMinimized()"></div>
+                    </div>
+                </div>
                 <div class="settings-section" id="tab-updates">
                     <div class="section-title">System Updates</div>
                     <div class="toggle-row">
