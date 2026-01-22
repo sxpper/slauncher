@@ -9,6 +9,7 @@ A high-performance Desktop App Launcher built with Electron, featuring a "Cyberp
   - **Persistence**: Remembers pinned apps, settings, and sticky notes.
   - **System Stats**: Real-time CPU, RAM, and GPU monitoring.
   - **Auto-Updates**: Built-in Git integration for seamless updates.
+  - **Multi-Monitor Launch Support**: Launch an application on a chosen display, if more than one.
 - **UI**: Premium "Glassmorphism" design with 60FPS animations.
 
 ## Quick Start
