@@ -68,12 +68,16 @@ window.ContextMenu = {
                     }
                 }
                 break;
+                break;
             case 'timer':
                 if (window.AppTimer) {
                     window.AppTimer.openModal(appName);
                 } else {
                     console.error("AppTimer not found!");
                 }
+                break;
+            case 'rename':
+                window.openRenameModal(appId);
                 break;
         }
 
@@ -479,6 +483,13 @@ function createBox(app, index, isClone = false, isPinned = false) {
 
     let lastFrame = 0;
     el.addEventListener('mousemove', (e) => {
+        // Tooltip logic
+        const tooltip = document.getElementById('uiTooltip');
+        if (tooltip) {
+            tooltip.style.left = e.pageX + 15 + 'px';
+            tooltip.style.top = e.pageY + 15 + 'px';
+        }
+
         if (document.body.classList.contains('low-spec-mode')) return;
 
         const now = Date.now();
@@ -502,10 +513,19 @@ function createBox(app, index, isClone = false, isPinned = false) {
     });
 
     el.addEventListener('mouseenter', () => {
+        const tooltip = document.getElementById('uiTooltip');
+        if (tooltip) {
+            tooltip.innerText = app.name;
+            tooltip.style.display = 'block';
+        }
+
         if (typeof SoundManager != 'undefined') SoundManager.playHover();
     });
     el.addEventListener('mousedown', () => { if (typeof SoundManager != 'undefined') SoundManager.playClick() });
     el.addEventListener('mouseleave', () => {
+        const tooltip = document.getElementById('uiTooltip');
+        if (tooltip) tooltip.style.display = 'none';
+
         el.style.transform = '';
         el.style.zIndex = '';
     });
@@ -766,3 +786,54 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+let currentRenameAppId = null;
+
+window.openRenameModal = function (appId) {
+    const app = ALL_APPS.find(a => a.id === appId);
+    if (!app) return;
+
+    currentRenameAppId = appId;
+    const modal = document.getElementById('renameAppModal');
+    const nameSpan = document.getElementById('renameAppName');
+    const input = document.getElementById('renameInput');
+
+    if (modal && nameSpan && input) {
+        nameSpan.innerText = app.name;
+        input.value = app.name;
+        modal.style.display = 'block';
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 50);
+    }
+};
+
+window.closeRenameModal = function () {
+    const modal = document.getElementById('renameAppModal');
+    if (modal) modal.style.display = 'none';
+    currentRenameAppId = null;
+};
+
+window.saveRename = function () {
+    if (!currentRenameAppId) return;
+
+    const input = document.getElementById('renameInput');
+    const newName = input.value.trim();
+
+    if (!newName) {
+        if (typeof showToast === 'function') showToast("Name cannot be empty", "error");
+        return;
+    }
+
+    const app = ALL_APPS.find(a => a.id === currentRenameAppId);
+    if (app) {
+        app.name = newName;
+        saveApps();
+        if (window.rebuildCarousel) window.rebuildCarousel();
+        if (window.rebuildPinned) window.rebuildPinned();
+        if (typeof showToast === 'function') showToast("App Renamed", "success");
+    }
+
+    closeRenameModal();
+};

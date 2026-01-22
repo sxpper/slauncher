@@ -92,9 +92,6 @@
             <div class="status-indicators">
                 <div class="system-graphs" id="graphContainer" style="display:none; overflow-x:auto; max-width:90%;">
                 </div>
-                <div id="graphTooltip"
-                    style="position:absolute; display:none; background:rgba(0,0,0,0.8); border:1px solid var(--accent-primary); padding:5px 10px; border-radius:4px; font-size:0.8rem; pointer-events:none; z-index:9000; backdrop-filter:blur(5px); box-shadow:0 5px 15px rgba(0,0,0,0.5);">
-                    Tooltip</div>
             </div>
         </div>
 
@@ -190,11 +187,17 @@
 
     <div id="toastContainer"></div>
 
+    <div id="uiTooltip"
+        style="position:absolute; display:none; background:rgba(0,0,0,0.8); border:1px solid var(--accent-primary); padding:5px 10px; border-radius:4px; font-size:0.8rem; pointer-events:none; z-index:9000; backdrop-filter:blur(5px); box-shadow:0 5px 15px rgba(0,0,0,0.5); color:white;">
+        Tooltip</div>
+
+
     <div class="context-menu" id="contextMenu">
         <div class="ctx-item" onclick="ContextMenu.handleAction('pin')"><i class="fa-solid fa-thumbtack"></i> <span
                 id="ctxPinText">Add to Pins</span></div>
         <div class="ctx-item" onclick="ContextMenu.handleAction('launch')"><i class="fa-solid fa-rocket"></i> Launch
         </div>
+        <div class="ctx-item" onclick="ContextMenu.handleAction('rename')"><i class="fa-solid fa-pen"></i> Rename</div>
         <div class="ctx-item" onclick="ContextMenu.handleAction('timer')"><i class="fa-solid fa-hourglass-half"></i> Set
             Usage Timer</div>
         <div class="ctx-separator"></div>
@@ -221,6 +224,20 @@
         </div>
         <button class="tm-close"
             onclick="document.getElementById('usageTimerModal').style.display='none'">Cancel</button>
+    </div>
+
+    <div id="renameAppModal" class="timer-modal" style="display:none;">
+        <div class="tm-header">Rename <span id="renameAppName" style="color:var(--accent-primary)">App</span></div>
+        <div class="tm-custom" style="margin-top:20px; flex-direction:column; gap:10px;">
+            <input type="text" id="renameInput" placeholder="New Name"
+                style="width:100%; height:40px; padding:0 10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:4px; color:white;">
+            <div style="display:flex; width:100%; gap:10px;">
+                <button onclick="saveRename()" class="tech-btn"
+                    style="flex:1; background:var(--accent-primary); color:black;">Save</button>
+                <button onclick="closeRenameModal()" class="tech-btn"
+                    style="flex:1; background:rgba(255,255,255,0.1); color:white; border:none;">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <div id="widgetDescBox" class="widget-desc-box"></div>

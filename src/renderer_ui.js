@@ -142,7 +142,7 @@ function showToast(msg, type = 'info') {
 }
 
 const graphContainer = document.getElementById('graphContainer');
-const tooltip = document.getElementById('graphTooltip');
+const tooltip = document.getElementById('uiTooltip');
 
 const graphRegistry = {};
 
